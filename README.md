@@ -31,23 +31,75 @@ digitalHealth/
 
 ---
 
-## Installation
+## Quick Start (for a new machine)
+
+### 1 — Clone and install
 
 ```bash
-# 1. Clone the repo
-git clone <your-repo-url>
-cd digitalHealth
+git clone https://github.com/vajihehTarahomi/organai-segmentation.git
+cd organai-segmentation
 
-# 2. Create virtual environment
 python -m venv venv
-source venv/Scripts/activate   # Windows
-# or: source venv/bin/activate  # Mac/Linux
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # Mac/Linux
 
-# 3. Install dependencies
 pip install -r requirements.txt
 ```
 
-> **Note:** TotalSegmentator will automatically download AI model weights (~150 MB) on first run.
+> TotalSegmentator will automatically download AI model weights (~150 MB) on first run.
+
+### 2 — Get a CT scan (required)
+
+CT data is not included in this repo (too large). Download the free **MSD Task09 Spleen** dataset:
+
+1. Go to [medicaldecathlon.com](http://medicaldecathlon.com)
+2. Download **Task09_Spleen.tar** (~1.5 GB)
+3. Extract it so you have this path:
+   ```
+   organai-segmentation/
+   └── real_ct/
+       └── Task09_Spleen/
+           └── Task09_Spleen/
+               └── imagesTr/
+                   └── spleen_10.nii.gz
+   ```
+
+### 3 — Run segmentation
+
+```python
+from totalsegmentator.python_api import totalsegmentator
+
+totalsegmentator(
+    input=r"real_ct/Task09_Spleen/Task09_Spleen/imagesTr/spleen_10.nii.gz",
+    output=r"real_ct/spleen10_seg",
+    device="cpu",
+    fast=True
+)
+```
+
+This takes ~4 minutes on CPU and produces 117 organ masks in `real_ct/spleen10_seg/`.
+
+### 4 — Launch the web app
+
+```bash
+python webapp/app.py
+# Open: http://localhost:5000
+```
+
+The app auto-detects the segmentation output and displays organ volumes with clinical normal ranges.
+
+---
+
+## Installation (alternative — no real CT)
+
+If you just want to see the UI without real CT data:
+
+```bash
+python create_realistic_ct.py   # generates a synthetic abdomen CT
+python webapp/app.py            # launches app with synthetic data (volumes = 0)
+```
+
+> Note: TotalSegmentator won't find organs in synthetic data — volumes will show 0. Use real CT for meaningful results.
 
 ---
 
