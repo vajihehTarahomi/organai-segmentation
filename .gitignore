@@ -1,0 +1,29 @@
+# Python virtual environment
+venv/
+digitalHealthvenv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Large binary files — CT scans and AI model weights
+real_ct/
+sample_ct/
+sample_output/
+*.nii
+*.nii.gz
+*.mha
+*.mhd
+*.dcm
+
+# AI model weights (downloaded automatically by TotalSegmentator)
+.totalsegmentator/
+
+# Installers
+*.exe
+
+# Sensitive / local config
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
