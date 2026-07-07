@@ -66,15 +66,10 @@ CT data is not included in this repo (too large). Download the free **MSD Task09
 
 ### 3 — Run segmentation
 
-```python
-from totalsegmentator.python_api import totalsegmentator
+Edit the paths at the top of `segment.py` if needed, then run:
 
-totalsegmentator(
-    input=r"real_ct/Task09_Spleen/Task09_Spleen/imagesTr/spleen_10.nii.gz",
-    output=r"real_ct/spleen10_seg",
-    device="cpu",
-    fast=True
-)
+```bash
+python segment.py
 ```
 
 This takes ~4 minutes on CPU and produces 117 organ masks in `real_ct/spleen10_seg/`.
