@@ -1,0 +1,17 @@
+venv/
+digitalHealthvenv/
+__pycache__/
+*.pyc
+real_ct/
+sample_ct/
+sample_output/
+pneumoAI/
+*.nii
+*.nii.gz
+*.pptx
+*.pdf
+*.docx
+*.xlsx
+.totalsegmentator/
+.git/
+.claude/

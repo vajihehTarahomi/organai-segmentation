@@ -1,0 +1,17 @@
+services:
+  organai:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      ORGANAI_DEVICE: cpu        # set to "gpu" with an NVIDIA runtime
+      ORGANAI_FAST: "true"
+      ORGANAI_MAX_UPLOAD_MB: "500"
+      # ORGANAI_API_TOKEN: "change-me"   # uncomment to require a bearer token
+    volumes:
+      - organai-data:/data
+      - totalseg-weights:/root/.totalsegmentator   # cache model weights across restarts
+
+volumes:
+  organai-data:
+  totalseg-weights:

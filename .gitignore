@@ -24,6 +24,20 @@ sample_output/
 # Sensitive / local config
 .claude/
 
+# Service runtime data (uploads + generated masks)
+_organai_test_data/
+_organai_data/
+_data/
+data/
+
+# Other projects / artifacts in this working dir (separate repos / not part of OrganAI)
+pneumoAI/
+*.pptx
+*.docx
+*.xlsx
+*.pdf
+clinical_unpacked/
+
 # OS
 .DS_Store
 Thumbs.db

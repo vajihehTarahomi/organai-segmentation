@@ -66,10 +66,8 @@ CT data is not included in this repo (too large). Download the free **MSD Task09
 
 ### 3 — Run segmentation
 
-Edit the paths at the top of `segment.py` if needed, then run:
-
 ```bash
-python segment.py
+python segment.py -i real_ct/Task09_Spleen/Task09_Spleen/imagesTr/spleen_10.nii.gz -o real_ct/spleen10_seg
 ```
 
 This takes ~4 minutes on CPU and produces 117 organ masks in `real_ct/spleen10_seg/`.
@@ -85,7 +83,68 @@ The app auto-detects the segmentation output and displays organ volumes with cli
 
 ---
 
-## Installation (alternative — no real CT)
+## Deploying as a Service (recommended)
+
+The `api/` package is a **FastAPI service** with on-demand inference — upload a CT and get organ volumes back over HTTP. No hardcoded paths; everything is configured via environment variables.
+
+### Run with Docker
+
+```bash
+docker compose up --build
+# open http://localhost:8000
+```
+
+Upload a `.nii/.nii.gz` CT in the browser, or via the API:
+
+```bash
+# start a segmentation job
+curl -F "file=@abdomen_ct.nii.gz" http://localhost:8000/api/jobs
+# -> {"id":"ab12cd34ef56","status":"queued"}
+
+# poll status (returns volumes when done)
+curl http://localhost:8000/api/jobs/ab12cd34ef56
+
+# fetch a rendered slice (base64 PNG) at slice z=28
+curl "http://localhost:8000/api/jobs/ab12cd34ef56/slice/28"
+```
+
+### API endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/health` | Liveness probe |
+| POST | `/api/jobs` | Upload CT → start segmentation job |
+| GET | `/api/jobs` | List jobs |
+| GET | `/api/jobs/{id}` | Job status + organ volumes when done |
+| GET | `/api/jobs/{id}/slice/{z}` | Rendered CT slice with overlays (base64 PNG) |
+
+### Configuration (environment variables)
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `ORGANAI_DATA_DIR` | `/data` | Where uploads + masks are stored |
+| `ORGANAI_DEVICE` | `cpu` | `cpu` or `gpu` |
+| `ORGANAI_FAST` | `true` | 3mm fast mode vs full resolution |
+| `ORGANAI_MAX_UPLOAD_MB` | `500` | Upload size limit |
+| `ORGANAI_MAX_WORKERS` | `1` | Concurrent segmentation jobs |
+| `ORGANAI_API_TOKEN` | *(none)* | If set, `POST /api/jobs` requires `Authorization: Bearer <token>` |
+
+### Run without Docker
+
+```bash
+pip install -r requirements-api.txt
+ORGANAI_DATA_DIR=./data uvicorn api.main:app --host 0.0.0.0 --port 8000
+```
+
+> **Architecture note:** segmentation runs in a background worker pool; the API returns a job id immediately and the client polls for the result. Model weights (~150 MB) download on the first inference and are cached in the `totalseg-weights` volume.
+
+---
+
+## Offline / CLI use (no server)
+
+The original one-shot scripts still work for local experimentation:
+
+### Installation (alternative — no real CT)
 
 If you just want to see the UI without real CT data:
 
