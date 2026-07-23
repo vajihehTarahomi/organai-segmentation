@@ -61,37 +61,69 @@ def _hex_rgb(h):
     return tuple(int(h[i:i+2], 16) / 255 for i in (0, 2, 4))
 
 
-def render_slice(ct_path: str, seg_dir: str, z: int, wc: int = 40, ww: int = 400) -> str:
-    """Render an axial CT slice with organ overlays; return base64 PNG."""
+# Small in-memory cache of loaded volumes, keyed by (ct_path, seg_dir).
+# Keeps the whole CT + present organ masks in RAM so scrolling is instant
+# instead of re-decompressing gzipped NIfTI on every slice request.
+_CACHE: "dict[tuple, dict]" = {}
+_CACHE_MAX = 2  # number of distinct cases to keep resident
+
+
+def _get_volumes(ct_path: str, seg_dir: str) -> dict:
+    key = (ct_path, seg_dir)
+    hit = _CACHE.get(key)
+    if hit is not None:
+        return hit
+
     ct = nib.load(ct_path).get_fdata()
+    masks = {}
+    for organ in ORGANS:
+        f = os.path.join(seg_dir, organ + ".nii.gz")
+        if os.path.exists(f):
+            m = nib.load(f).get_fdata() > 0
+            if m.any():
+                masks[organ] = m
+    entry = {"ct": ct, "masks": masks}
+
+    if len(_CACHE) >= _CACHE_MAX:
+        _CACHE.pop(next(iter(_CACHE)))  # evict oldest
+    _CACHE[key] = entry
+    return entry
+
+
+def render_slice(ct_path: str, seg_dir: str, z: int, wc: int = 40, ww: int = 400) -> str:
+    """Render an axial CT slice with organ overlays; return base64 PNG.
+
+    Encodes directly with PIL/numpy (no matplotlib) so scrolling is fast.
+    """
+    from PIL import Image
+
+    vol = _get_volumes(ct_path, seg_dir)
+    ct, masks = vol["ct"], vol["masks"]
     n = ct.shape[2]
     z = max(0, min(int(z), n - 1))
 
+    # HU windowing -> 0..1 grayscale, flipped vertically to match origin="lower"
     lo, hi = wc - ww / 2, wc + ww / 2
     slc = np.clip(ct[:, :, z], lo, hi)
     slc = (slc - lo) / (hi - lo)
+    slc = np.flipud(slc)
 
-    fig, ax = plt.subplots(figsize=(6, 6), facecolor="black")
-    ax.imshow(slc, cmap="gray", origin="lower", aspect="equal")
+    rgb = np.repeat(slc[:, :, None], 3, axis=2)  # gray -> RGB
 
-    overlay = np.zeros((*ct.shape[:2], 4), dtype=np.float32)
+    # Alpha-composite each organ overlay (0.55 opacity) onto the grayscale
+    alpha = 0.55
     for organ, cfg in ORGANS.items():
-        f = os.path.join(seg_dir, organ + ".nii.gz")
-        if not os.path.exists(f):
+        m = masks.get(organ)
+        if m is None:
             continue
-        m = nib.load(f).get_fdata()[:, :, z]
-        if m.sum() == 0:
+        ms = np.flipud(m[:, :, z])
+        if not ms.any():
             continue
-        r, g, b = _hex_rgb(cfg["color"])
-        overlay[m > 0] = [r, g, b, 0.55]
-    ax.imshow(overlay, origin="lower", aspect="equal")
+        color = np.array(_hex_rgb(cfg["color"]))
+        rgb[ms] = rgb[ms] * (1 - alpha) + color * alpha
 
-    ax.set_title(f"Axial Slice {z + 1} / {n}", color="white", fontsize=11, pad=4)
-    ax.axis("off")
-    plt.tight_layout(pad=0.2)
-
+    img = Image.fromarray((np.clip(rgb, 0, 1) * 255).astype(np.uint8), "RGB")
     buf = io.BytesIO()
-    plt.savefig(buf, format="png", dpi=110, bbox_inches="tight", facecolor="black")
-    plt.close(fig)
+    img.save(buf, format="PNG")
     buf.seek(0)
     return base64.b64encode(buf.read()).decode()
