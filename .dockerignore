@@ -8,6 +8,8 @@ sample_output/
 pneumoAI/
 *.nii
 *.nii.gz
+# Exception: keep the bundled demo case in the image
+!api/sample_data/**
 *.pptx
 *.pdf
 *.docx

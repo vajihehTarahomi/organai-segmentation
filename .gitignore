@@ -18,6 +18,10 @@ sample_output/
 # AI model weights (downloaded automatically by TotalSegmentator)
 .totalsegmentator/
 
+# Exception: the bundled demo case IS committed (small, powers the Sample CT tab)
+!api/sample_data/
+!api/sample_data/**
+
 # Installers
 *.exe
 

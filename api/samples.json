@@ -2,7 +2,7 @@
   {
     "id": "sample-spleen-10",
     "name": "Demo — Abdominal CT (MSD Task09 spleen_10)",
-    "ct":  "C:/digitalHealth/real_ct/Task09_Spleen/Task09_Spleen/imagesTr/spleen_10.nii.gz",
-    "seg": "C:/digitalHealth/real_ct/spleen10_seg"
+    "ct":  "sample_data/spleen_10/ct.nii.gz",
+    "seg": "sample_data/spleen_10/seg"
   }
 ]

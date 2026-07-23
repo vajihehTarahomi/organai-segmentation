@@ -23,9 +23,11 @@ def load_samples() -> list:
     except (json.JSONDecodeError, OSError):
         return []
 
+    base = path.parent  # relative ct/seg paths resolve against the manifest's dir
     available = []
     for it in items:
-        ct, seg = it.get("ct", ""), it.get("seg", "")
+        ct = str((base / it.get("ct", "")).resolve()) if not os.path.isabs(it.get("ct", "")) else it["ct"]
+        seg = str((base / it.get("seg", "")).resolve()) if not os.path.isabs(it.get("seg", "")) else it["seg"]
         if os.path.exists(ct) and os.path.isdir(seg):
             jobstore.register_sample(it["id"], it["name"], ct, seg)
             available.append({"id": it["id"], "name": it["name"]})

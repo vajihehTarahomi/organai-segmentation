@@ -22,7 +22,7 @@ docker compose up --build
 
 Then open **http://localhost:8000** and either:
 - **Live CT** — upload your own `.nii` / `.nii.gz` scan (segments on demand), or
-- **Sample CT** — view a pre-segmented demo instantly (if a sample is configured).
+- **Sample CT** — view the bundled pre-segmented demo instantly, no upload or setup.
 
 > On first use, TotalSegmentator downloads ~150 MB of model weights (cached afterwards).
 
@@ -89,9 +89,10 @@ All via environment variables — no code changes needed.
 | `ORGANAI_API_TOKEN` | *(none)* | If set, uploads require `Authorization: Bearer <token>` |
 | `ORGANAI_SAMPLES_MANIFEST` | `api/samples.json` | Path to the demo-cases manifest |
 
-**Adding a demo case:** edit `api/samples.json` with entries of
-`{"id","name","ct","seg"}`, pointing at a CT file and its TotalSegmentator output
-directory. Entries whose files don't exist are skipped.
+**Demo case:** a small sample CT + masks ships in `api/sample_data/` and powers the
+**Sample CT** tab out of the box. To add your own, drop files in `api/sample_data/`
+and add an entry to `api/samples.json` (`{"id","name","ct","seg"}`); relative paths
+resolve against the manifest's folder, and entries with missing files are skipped.
 
 ---
 
